@@ -1,11 +1,99 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-	<meta charset="UTF-8">
-	<title>****</title>
+    <meta charset="UTF-8">
+    <title>Encuentra Tu Cargador</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-	<h1>Hola mundo</h1>
-	<p>Este es mi primer sitio web.</p>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    // 1️⃣ Crear mapa centrado en España por defecto
+    const map = L.map('map').setView([40.4168, -3.7038], 6);
+
+    // 2️⃣ Añadir capa de OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 3️⃣ Pedir cargadores al backend
+    fetch('http://localhost:3000/cargadores')
+        .then(response => response.json())
+        .then(data => {
+
+            data.forEach(cargador => {
+
+				let iconUrl;
+
+				if (cargador.estado === 'disponible') {
+					iconUrl = 'https://maps.google.com/mapfiles/ms/icons/green-dot.png';
+				} else if (cargador.estado === 'ocupado') {
+					iconUrl = 'https://maps.google.com/mapfiles/ms/icons/red-dot.png';
+				} else{
+				    iconUrl = 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png';
+				}
+
+				const customIcon = L.icon({
+				    iconUrl: iconUrl,
+				    iconSize: [32, 32]
+				});
+	
+				const marker = L.marker(
+				    [cargador.latitud, cargador.longitud],
+				    { icon: customIcon }
+				)
+                    .addTo(map)
+                    .bindPopup(`
+                        <b>Tipo:</b> ${cargador.tipo}<br>
+                        <b>Estado:</b> ${cargador.estado}<br>
+                        <b>Potencia:</b> ${cargador.velocidad_carga_kw} kW<br>
+                        <b>Precio:</b> ${cargador.precio_kw} €/kW
+                    `);
+
+            });
+
+        })
+        .catch(error => console.error('Error:', error));
+
+    // 4️⃣ Geolocalización del usuario
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            // Centrar mapa en usuario
+            map.setView([lat, lng], 13);
+
+            // Marcador azul usuario
+            L.marker([lat, lng])
+                .addTo(map)
+                .bindPopup("Tu ubicación")
+                .openPopup();
+
+        });
+    }
+
+</script>
+
 </body>
 </html>

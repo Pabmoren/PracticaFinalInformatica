@@ -6,9 +6,11 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = 3000;
+const path = require('path');
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 function verificarToken(req, res, next) {
     const token = req.cookies.token;
